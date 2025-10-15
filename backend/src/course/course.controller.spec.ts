@@ -53,6 +53,25 @@ const CourseMockService = {
       };
     }),
   delete: jest.fn().mockImplementation((id) => id),
+
+  listWithUserFlag: jest.fn().mockImplementation((userId: string) => {
+    return [
+      {
+        id: 'course1',
+        name: 'Course 1',
+        description: 'desc 1',
+        dateCreated: new Date(),
+        hasEnrollment: true,
+      },
+      {
+        id: 'course2',
+        name: 'Course 2',
+        description: 'desc 2',
+        dateCreated: new Date(),
+        hasEnrollment: false,
+      },
+    ];
+  }),
 };
 
 const ContentMockService = {
@@ -261,6 +280,18 @@ describe('CourseController', () => {
     it('should delete a content and return the id', async () => {
       const id = await controller.deleteContent('testid', 'testcontentid');
       expect(id).toBe('testcontentid');
+    });
+  });
+
+  describe('listWithUserFlag', () => {
+    it('should delegate to service with the provided userId and return the flagged list', async () => {
+      const spy = jest.spyOn(CourseMockService, 'listWithUserFlag');
+      const result = await controller.listWithUserFlag('user-123');
+
+      expect(spy).toHaveBeenCalledWith('user-123');
+      expect(Array.isArray(result)).toBe(true);
+      expect(result[0]).toHaveProperty('hasEnrollment', true);
+      expect(result[1]).toHaveProperty('hasEnrollment', false);
     });
   });
 });

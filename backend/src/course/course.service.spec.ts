@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { CreateCourseDto, UpdateCourseDto } from './course.dto';
+import { Course } from './course.entity';
 import { CourseService } from './course.service';
 
 const MockService = {
@@ -144,6 +146,89 @@ describe('CourseService', () => {
     it('should get number of courses', async () => {
       const count = await service.count();
       expect(count).toBe(10);
+    });
+  });
+  describe('listWithUserFlag', () => {
+    it('should build the query correctly and map rows properly', async () => {
+      // 🔹 mock del QueryBuilder
+      const qb: any = {
+        leftJoin: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn(),
+      };
+
+      // 🔹 mock del repo inyectado
+      const repoMock = {
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      };
+
+      // 🔹 crear un módulo sólo con el servicio real y el mock del repo
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          CourseService,
+          { provide: getRepositoryToken(Course), useValue: repoMock },
+        ],
+      }).compile();
+
+      const realService = moduleRef.get<CourseService>(CourseService);
+
+      // 🔹 mock de filas que devolvería el QueryBuilder
+      const mockRows = [
+        {
+          id: 'c1',
+          name: 'React',
+          description: 'Frontend fundamentals',
+          dateCreated: new Date('2024-01-01'),
+          hasEnrolledUser: false,
+          enrollmentId: null,
+        },
+        {
+          id: 'c2',
+          name: 'NestJS',
+          description: 'Backend deep dive',
+          dateCreated: new Date('2024-02-02'),
+          hasEnrolledUser: true,
+          enrollmentId: 'e2',
+        },
+      ];
+
+      qb.getRawMany.mockResolvedValueOnce(mockRows);
+
+      // 🔹 ejecutar el método real
+      const result = await realService.listWithUserFlag('user-123');
+
+      // 🔹 verificaciones
+      expect(repoMock.createQueryBuilder).toHaveBeenCalledWith('c');
+      expect(qb.leftJoin).toHaveBeenCalledWith(
+        expect.any(Function),
+        'e',
+        'e.courseId = c.id AND e.userId = :userId',
+        { userId: 'user-123' },
+      );
+      expect(qb.orderBy).toHaveBeenCalledWith('c.name', 'ASC');
+      expect(qb.addOrderBy).toHaveBeenCalledWith('c.description', 'ASC');
+      expect(qb.getRawMany).toHaveBeenCalled();
+
+      expect(result).toEqual([
+        {
+          id: 'c1',
+          name: 'React',
+          description: 'Frontend fundamentals',
+          dateCreated: new Date('2024-01-01'),
+          hasEnrolledUser: false,
+          enrollmentId: null,
+        },
+        {
+          id: 'c2',
+          name: 'NestJS',
+          description: 'Backend deep dive',
+          dateCreated: new Date('2024-02-02'),
+          hasEnrolledUser: true,
+          enrollmentId: 'e2',
+        },
+      ]);
     });
   });
 });

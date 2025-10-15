@@ -73,7 +73,7 @@ export class EnrollmentService {
   }
 
   async removeEnrollment(enrollment_id: string): Promise<string> {
-    const existEnrollment = this.findByEnrollmentId(enrollment_id);
+    const existEnrollment = await this.findByEnrollmentId(enrollment_id);
     if (existEnrollment) {
       await this.enrollmentRepository.delete({ id: enrollment_id });
       return `Id ${enrollment_id} Deleted`;
