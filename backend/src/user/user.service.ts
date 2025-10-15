@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { ILike } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 import { CreateUserDto, UpdateUserDto } from './user.dto';
 import { User } from './user.entity';
@@ -8,6 +9,10 @@ import { UserQuery } from './user.query';
 
 @Injectable()
 export class UserService {
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+  ) {}
+
   async save(createUserDto: CreateUserDto): Promise<User> {
     const user = await this.findByUsername(createUserDto.username);
 
@@ -30,7 +35,7 @@ export class UserService {
       }
     });
 
-    return User.find({
+    return this.userRepository.find({
       where: userQuery,
       order: {
         firstName: 'ASC',

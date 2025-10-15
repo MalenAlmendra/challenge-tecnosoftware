@@ -1,6 +1,8 @@
-FROM node:alpine as build
+FROM node:18-alpine as build
 
 WORKDIR /app
+
+RUN apk add --no-cache python3 make g++
 
 COPY package.json .
 COPY yarn.lock .
@@ -9,11 +11,11 @@ RUN yarn
 
 COPY . .
 
-RUN yarn build
+RUN yarn build && ls -la /app/dist
 
 #---
 
-FROM node:alpine
+FROM node:18-alpine AS runtime
 
 WORKDIR /app
 

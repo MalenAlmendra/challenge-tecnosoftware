@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Switch } from 'react-router-dom';
 
 import useAuth from './hooks/useAuth';
 import Contents from './pages/Contents';
 import Courses from './pages/Courses';
 import Dashboard from './pages/Dashboard';
+import Enrollments from './pages/Enrollments';
 import Login from './pages/Login';
 import Users from './pages/Users';
 import { AuthRoute, PrivateRoute } from './Route';
@@ -12,6 +13,7 @@ import authService from './services/AuthService';
 
 export default function App() {
   const { authenticatedUser, setAuthenticatedUser } = useAuth();
+  const [isLoged, setIsLoged] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const authenticate = async () => {
@@ -26,7 +28,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!authenticatedUser) {
+    if (!authenticatedUser && isLoged) {
       authenticate();
     } else {
       setIsLoaded(true);
@@ -40,7 +42,7 @@ export default function App() {
         <PrivateRoute exact path="/users" component={Users} roles={['admin']} />
         <PrivateRoute exact path="/courses" component={Courses} />
         <PrivateRoute exact path="/courses/:id" component={Contents} />
-
+        <PrivateRoute exact path="/enrollments" component={Enrollments} />
         <AuthRoute exact path="/login" component={Login} />
       </Switch>
     </Router>

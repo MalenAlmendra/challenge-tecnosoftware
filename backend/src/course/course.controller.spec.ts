@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateContentDto, UpdateContentDto } from 'src/content/content.dto';
 
+import { CreateContentDto, UpdateContentDto } from '../content/content.dto';
 import { ContentService } from '../content/content.service';
 import { CourseController } from './course.controller';
 import { CreateCourseDto, UpdateCourseDto } from './course.dto';

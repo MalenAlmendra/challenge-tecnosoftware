@@ -6,7 +6,7 @@
   html,
   body,
   #root {
-    @apply h-full;
+    @apply h-full font-sans;
   }
   h1 {
     @apply text-2xl;
@@ -18,24 +18,24 @@
     @apply text-lg;
   }
   a {
-    @apply text-blue-600 underline;
+    @apply  hover:bg-hover-white hover:text-brand-primary bg-brand-primary text-primary-white underline;
   }
 }
 
 @layer components {
   .btn {
-    @apply p-3 bg-blue-500 rounded-md focus:outline-none text-white;
-    @apply hover:bg-blue-700 transition-all;
+    @apply p-3 bg-brand-primary rounded-md focus:outline-none text-primary-white;
+    @apply hover:bg-hover-white hover:text-brand-primary transition-all;
     @apply focus:ring disabled:opacity-50;
   }
   .btn.danger {
-    @apply bg-red-500 hover:bg-red-700;
+    @apply bg-primary-red hover:bg-primary-white;
   }
   .input {
-    @apply rounded-md border-gray-300 transition-colors disabled:opacity-50;
+    @apply rounded-md transition-colors disabled:opacity-50;
   }
   .card {
-    @apply p-5 rounded-md bg-white border;
+    @apply p-5 rounded-md bg-brand-background border;
   }
   .table-container {
     @apply border rounded-lg mt-5 shadow overflow-x-auto;
@@ -44,9 +44,12 @@
     @apply flex flex-col lg:flex-row gap-5 rounded-lg p-3 shadow overflow-x-auto border;
   }
   .sidebar {
-    @apply fixed h-full w-72 p-5 shadow flex flex-col transform -translate-x-72 bg-white lg:translate-x-0 transition-transform;
+    @apply fixed h-full w-72 p-5 shadow flex flex-col transform -translate-x-72 bg-brand-background lg:translate-x-0 transition-transform;
   }
   .sidebar.show {
     @apply translate-x-0 !important;
+  }
+  .link{
+    @apply bg-brand-background text-brand-primary hover:bg-brand-primary hover:text-primary-white
   }
 }

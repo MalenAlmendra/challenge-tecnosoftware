@@ -100,4 +100,9 @@ export class CourseController {
   ): Promise<string> {
     return await this.contentService.delete(id, contentId);
   }
+
+  @Get('/with-user-flag/:userId')
+  async listWithUserFlag(@Param('userId') userId: string) {
+    return this.courseService.listWithUserFlag(userId);
+  }
 }

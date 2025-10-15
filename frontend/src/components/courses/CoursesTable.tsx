@@ -1,29 +1,31 @@
 import { useState } from 'react';
 import { AlertTriangle, Loader, X } from 'react-feather';
 import { useForm } from 'react-hook-form';
+import { useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
 
 import useAuth from '../../hooks/useAuth';
-import Course from '../../models/course/Course';
+import ICourseWithEnrollment from '../../models/course/CourseWithFlags';
 import UpdateCourseRequest from '../../models/course/UpdateCourseRequest';
 import courseService from '../../services/CourseService';
+import enrollmentService from '../../services/EnrollmentService';
 import Modal from '../shared/Modal';
 import Table from '../shared/Table';
 import TableItem from '../shared/TableItem';
 
-interface UsersTableProps {
-  data: Course[];
+interface CoursesTableProps {
+  data: ICourseWithEnrollment[];
   isLoading: boolean;
 }
 
-export default function CoursesTable({ data, isLoading }: UsersTableProps) {
+export default function CoursesTable({ data, isLoading }: CoursesTableProps) {
   const { authenticatedUser } = useAuth();
+  const queryClient = useQueryClient();
   const [deleteShow, setDeleteShow] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string>();
   const [error, setError] = useState<string>();
   const [updateShow, setUpdateShow] = useState<boolean>(false);
-
   const {
     register,
     handleSubmit,
@@ -31,6 +33,29 @@ export default function CoursesTable({ data, isLoading }: UsersTableProps) {
     reset,
     setValue,
   } = useForm<UpdateCourseRequest>();
+
+  const enrollMutation = useMutation(
+    ({ courseId }: { courseId: string }) =>
+      enrollmentService.createEnrollment({
+        userId: authenticatedUser.id,
+        courseId,
+      }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('courses-with-flag');
+      },
+    },
+  );
+
+  const unenrollMutation = useMutation(
+    ({ enrollmentId }: { enrollmentId: string }) =>
+      enrollmentService.removeEnrollment(enrollmentId),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('courses-with-flag');
+      },
+    },
+  );
 
   const handleDelete = async () => {
     try {
@@ -50,56 +75,112 @@ export default function CoursesTable({ data, isLoading }: UsersTableProps) {
       setUpdateShow(false);
       reset();
       setError(null);
+      queryClient.invalidateQueries('courses-with-flag');
     } catch (error) {
-      setError(error.response.data.message);
+      setError(error?.response?.data?.message ?? 'Unexpected error');
     }
   };
-
+  const columns = [
+    authenticatedUser.role === 'user' && 'State',
+    'Name',
+    'Description',
+    'Created',
+    'Actions',
+  ].filter(Boolean);
   return (
     <>
       <div className="table-container">
-        <Table columns={['Name', 'Description', 'Created']}>
+        <Table columns={columns}>
           {isLoading
             ? null
-            : data.map(({ id, name, description, dateCreated }) => (
-                <tr key={id}>
-                  <TableItem>
-                    <Link to={`/courses/${id}`}>{name}</Link>
-                  </TableItem>
-                  <TableItem>{description}</TableItem>
-                  <TableItem>
-                    {new Date(dateCreated).toLocaleDateString()}
-                  </TableItem>
-                  <TableItem className="text-right">
-                    {['admin', 'editor'].includes(authenticatedUser.role) ? (
-                      <button
-                        className="text-indigo-600 hover:text-indigo-900 focus:outline-none"
-                        onClick={() => {
-                          setSelectedCourseId(id);
-
-                          setValue('name', name);
-                          setValue('description', description);
-
-                          setUpdateShow(true);
-                        }}
-                      >
-                        Edit
-                      </button>
+            : data.map(
+                ({
+                  id,
+                  name,
+                  description,
+                  dateCreated,
+                  hasEnrolledUser,
+                  enrollmentId,
+                }) => (
+                  <tr key={id}>
+                    {authenticatedUser.role === 'user' ? (
+                      <TableItem>
+                        <span
+                          className={`rounded-full text-xs px-2 py-1 font-semibold ${
+                            hasEnrolledUser
+                              ? 'bg-brand-primary text-brand-background'
+                              : 'bg-brand-background text-brand-primary'
+                          }`}
+                        >
+                          {hasEnrolledUser ? 'Enrolled' : 'Unenrolled'}
+                        </span>
+                      </TableItem>
                     ) : null}
-                    {authenticatedUser.role === 'admin' ? (
-                      <button
-                        className="text-red-600 hover:text-red-900 ml-3 focus:outline-none"
-                        onClick={() => {
-                          setSelectedCourseId(id);
-                          setDeleteShow(true);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    ) : null}
-                  </TableItem>
-                </tr>
-              ))}
+                    <TableItem>
+                      <Link className="link" to={`/courses/${id}`}>
+                        {name}
+                      </Link>
+                    </TableItem>
+                    <TableItem>{description}</TableItem>
+                    <TableItem>
+                      {new Date(dateCreated).toLocaleDateString()}
+                    </TableItem>
+                    <TableItem className="text-right">
+                      {['admin', 'editor'].includes(authenticatedUser.role) ? (
+                        <button
+                          className="text-brand-primary hover:text-primary-white hover:bg-brand-primary focus:outline-none"
+                          onClick={() => {
+                            setSelectedCourseId(id);
+
+                            setValue('name', name);
+                            setValue('description', description);
+
+                            setUpdateShow(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      ) : null}
+                      {authenticatedUser.role === 'admin' ? (
+                        <button
+                          className="text-brand-primary hover:text-primary-white hover:bg-brand-primary ml-3 focus:outline-none"
+                          onClick={() => {
+                            setSelectedCourseId(id);
+                            setDeleteShow(true);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      ) : null}
+                      {authenticatedUser.role === 'user' &&
+                        !hasEnrolledUser && (
+                          <button
+                            className="btn"
+                            disabled={enrollMutation.isLoading}
+                            onClick={() =>
+                              enrollMutation.mutate({ courseId: id })
+                            }
+                          >
+                            {enrollMutation.isLoading ? '...' : 'Enroll me'}
+                          </button>
+                        )}
+                      {authenticatedUser.role === 'user' &&
+                        hasEnrolledUser &&
+                        enrollmentId && (
+                          <button
+                            className="btn danger"
+                            disabled={unenrollMutation.isLoading}
+                            onClick={() =>
+                              unenrollMutation.mutate({ enrollmentId })
+                            }
+                          >
+                            {unenrollMutation.isLoading ? '...' : 'Unenroll me'}
+                          </button>
+                        )}
+                    </TableItem>
+                  </tr>
+                ),
+              )}
         </Table>
         {!isLoading && data.length < 1 ? (
           <div className="text-center my-5 text-gray-500">

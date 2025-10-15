@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ILike } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ILike, Repository } from 'typeorm';
 
 import { CourseService } from '../course/course.service';
 import { CreateContentDto, UpdateContentDto } from './content.dto';
@@ -8,7 +9,11 @@ import { ContentQuery } from './content.query';
 
 @Injectable()
 export class ContentService {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(
+    private readonly courseService: CourseService,
+    @InjectRepository(Content)
+    private readonly contentRepository: Repository<Content>,
+  ) {}
 
   async save(
     courseId: string,
@@ -29,7 +34,7 @@ export class ContentService {
       contentQuery[key] = ILike(`%${contentQuery[key]}%`);
     });
 
-    return await Content.find({
+    return await this.contentRepository.find({
       where: contentQuery,
       order: {
         name: 'ASC',

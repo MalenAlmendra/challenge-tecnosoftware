@@ -10,24 +10,31 @@
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
+    "@types/react": "17",
+    "@types/react-dom": "17",
     "axios": "^0.21.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "history": "4.10.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "react-feather": "^2.0.9",
     "react-hook-form": "^7.3.5",
     "react-query": "^3.15.1",
-    "react-router-dom": "^5.2.0",
+    "react-router": "5.3.4",
+    "react-router-dom": "5.3.4",
     "react-scripts": "4.0.3",
-    "typescript": "^4.1.2",
+    "typescript": "~4.9",
     "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && craco start",
+    "format": "prettier --write .",
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
+  },
+  "resolutions": {
+    "minimatch": "^9.0.5",
+    "@types/react": "~17.0.47"
   },
   "eslintConfig": {
     "extends": [
@@ -59,7 +66,9 @@
   },
   "proxy": "http://localhost:5000",
   "devDependencies": {
-    "@types/react-router-dom": "^5.1.7",
+    "@types/history": "4.7.11",
+    "@types/react-router": "5.1.20",
+    "@types/react-router-dom": "5.3.3",
     "autoprefixer": "^9",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",

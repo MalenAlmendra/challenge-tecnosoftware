@@ -19,14 +19,14 @@ export default function Courses() {
 
   const { authenticatedUser } = useAuth();
   const { data, isLoading } = useQuery(
-    ['courses', name, description],
+    ['courses-with-flag', authenticatedUser?.id, name, description],
     () =>
-      courseService.findAll({
+      courseService.findAllWithUserFlag(authenticatedUser.id, {
         name: name || undefined,
         description: description || undefined,
       }),
     {
-      refetchInterval: 1000,
+      refetchOnWindowFocus: false,
     },
   );
 
@@ -60,7 +60,6 @@ export default function Courses() {
           <Plus /> Add Course
         </button>
       ) : null}
-
       <div className="table-filter">
         <div className="flex flex-row gap-5">
           <input
@@ -79,9 +78,7 @@ export default function Courses() {
           />
         </div>
       </div>
-
-      <CoursesTable data={data} isLoading={isLoading} />
-
+      <CoursesTable data={data ?? []} isLoading={isLoading} />
       {/* Add User Modal */}
       <Modal show={addCourseShow}>
         <div className="flex">
